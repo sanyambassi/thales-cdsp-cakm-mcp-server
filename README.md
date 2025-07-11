@@ -9,6 +9,8 @@ A Model Context Protocol (MCP) server for Database EKM/TDE operations using Ciph
 - **Multi-Database Support**: SQL Server and Oracle Database
 - **Key Rotation**: Automated encryption key rotation with key management on Thales CipherTrust Manager
 
+> **🎥 [Watch Demo Video](https://www.youtube.com/watch?v=5GezP4_CEyY)** - See the MCP server in action managing database encryption
+
 ## 🚀 Quick Start
 
 ### Installation
