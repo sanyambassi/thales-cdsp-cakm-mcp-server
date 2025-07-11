@@ -24,7 +24,7 @@ share/python-wheels/
 MANIFEST
 
 # Virtual environments
-#.env
+.env
 .venv
 env/
 venv/
@@ -58,8 +58,8 @@ config/*.yml
 uv.lock
 
 # Sensitive data
-#.env*
-#.env.example
+.env*
+!.env.example
 credentials.json
 secrets.json
 *.pem
