@@ -35,16 +35,14 @@
 
 ## CipherTrust Manager Requirements
 
-### CAKM (CipherTrust Application Key Management)
-- **Version**: CipherTrust Manager 2.11 or later
-- **License**: CAKM license required
-- **Network**: Network connectivity to CipherTrust Manager
-- **Authentication**: Valid CipherTrust Manager credentials
+- **CipherTrust Manager version v2.11 or higher**
+- **Valid CAKM License insalled on CipherTrust manager**
 
-### EKM Provider Setup
-- Configured EKM provider in CipherTrust Manager
-- Proper key lifecycle policies
-- Network connectivity between database servers and CipherTrust Manager
+### CAKM (CipherTrust Application Key Management)
+- **Version**: CAKM version 8.x
+- **License**: CAKM license installed on CipherTrust manager
+- **Network**: Network connectivity to CipherTrust Manager from the database server on NAE interface
+- **Authentication**: Valid CipherTrust Manager credentials
 
 ## Software Dependencies
 
