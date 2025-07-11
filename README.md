@@ -109,6 +109,22 @@ Add to your AI assistant configuration:
 }
 ```
 
+### Gemini CLI (settings.json)
+```json
+{
+  "mcpServers": {
+    "database-tde": {
+      "command": "/path/to/.venv/bin/database-tde-mcp-server",
+      "env": {
+        "DB_TDE_SERVER_NAME": "database-tde-mcp",
+        "DB_TDE_LOG_LEVEL": "INFO",
+        "DB_TDE_DATABASE_CONNECTIONS": "[{\"name\":\"prod_sql\",\"db_type\":\"sqlserver\",\"host\":\"sql-prod.company.com\",\"port\":1433,\"username\":\"tde_admin\",\"password\":\"secure_password\"},{\"name\":\"oracle_cdb1\",\"db_type\":\"oracle\",\"host\":\"oracle-prod.company.com\",\"port\":1521,\"username\":\"sys\",\"password\":\"oracle_password\",\"oracle_config\":{\"oracle_home\":\"/u01/app/oracle/product/21.0.0/dbhome_1\",\"oracle_sid\":\"cdb1\",\"service_name\":\"orcl\",\"mode\":\"SYSDBA\",\"wallet_root\":\"/opt/oracle/wallet\"},\"ssh_config\":{\"host\":\"oracle-prod.company.com\",\"username\":\"oracle\",\"private_key_path\":\"/path/to/private-key.pem\",\"port\":22,\"timeout\":30}}]"
+      }
+    }
+  }
+}
+```
+
 ### Architecture Overview
 ```
 MCP Server ↔ Database Server ↔ CAKM Provider/Library ↔ CipherTrust Manager
