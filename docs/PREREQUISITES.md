@@ -7,6 +7,11 @@
 - **Memory**: Minimum 512MB RAM available
 - **Network**: Access to database servers and CipherTrust Manager
 
+## Development & Build Tools
+
+- **uv**: An extremely fast Python package installer and resolver, used to manage dependencies and run scripts for this project.
+  - See installation instructions in the main [README.md](../README.md).
+
 ## Database Requirements
 
 ### SQL Server

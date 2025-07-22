@@ -53,7 +53,22 @@ uv run python -m database_tde_server --test-connections
 uv run python -m database_tde_server
 ```
 
-> **Note on Tool Design**: The tools in this server are designed around the resources they manage (e.g., `manage_sql_keys`, `manage_oracle_wallet`). Each tool exposes an `operation` parameter to perform specific actions like `create`, `list`, `rotate`, or `delete` on that resource. This provides a clear and consolidated interface for all database TDE lifecycle operations.
+## 📦 Installing `uv`
+
+This project uses `uv` to manage dependencies and run scripts. Please install it using one of the methods below.
+
+**Windows (PowerShell):**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Linux, macOS, and other shells:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+For more information, visit the [`uv` installation guide](https://github.com/astral-sh/uv#installation).
+
 
 ## 🔧 Available Tools
 
