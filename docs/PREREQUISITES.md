@@ -10,7 +10,7 @@
 ## Development & Build Tools
 
 - **uv**: An extremely fast Python package installer and resolver, used to manage dependencies and run scripts for this project.
-  - See installation instructions in the main [README.md](../README.md).
+  - See installation instructions in the main [README.md](../README.md#-installing-uv).
 
 ## Database Requirements
 
