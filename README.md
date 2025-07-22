@@ -67,7 +67,7 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-For more information, visit the [`uv` installation guide](https://github.com/astral-sh/uv#installation).
+For more information, visit the [uv installation guide](https://github.com/astral-sh/uv#installation).
 
 
 ## 🔧 Available Tools
