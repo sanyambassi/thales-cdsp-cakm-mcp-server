@@ -268,7 +268,8 @@ def register_key_management_tools(server: FastMCP, db_manager):
         Manage Oracle Master Encryption Keys (MEKs) in the keystore (wallet).
 
         This tool handles the listing and rotation of the primary keys that protect
-        all other keys within an Oracle TDE-enabled database.
+        all other keys within an Oracle TDE-enabled database. It is wallet-aware and
+        will not require a password for auto-login or HSM wallets during rotation.
 
         ---
         **Operations:**
@@ -280,7 +281,7 @@ def register_key_management_tools(server: FastMCP, db_manager):
             operation: The action to perform: "rotate" or "list".
             oracle_connection: The name of the Oracle database connection to use.
             container: The container to operate on: "CDB$ROOT", a specific PDB name, or "ALL".
-            wallet_password: The wallet password, formatted as "domain::username:password" or "username:password".
+            wallet_password: The wallet password. Only required for rotating keys in a password-protected software wallet.
             backup_tag: (For rotate) An optional identifier for the pre-rotation wallet backup.
             force: (For rotate) If true, forces the key rotation.
             key_id_filter: (For list) An optional filter to list only a specific key ID.
@@ -295,140 +296,18 @@ def register_key_management_tools(server: FastMCP, db_manager):
 
             if operation == "rotate":
                 logger.info(f"=== manage_oracle_keys(rotate) called ===")
-                if not all([container, wallet_password]):
-                    return json.dumps({"success": False, "error": "container and wallet_password are required for rotate"})
                 
-                # Generate backup tag if not provided
-                if not backup_tag:
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    backup_tag = f"mek_rotation_{container}_{timestamp}"
+                # The rotate_mek method in the database handler is now wallet-aware
+                # and will only use the password if necessary.
+                result = await db_handler.rotate_mek(
+                    container=container,
+                    wallet_password=wallet_password,
+                    backup_identifier=backup_tag,
+                    force=force
+                )
                 
-                # Ensure wallet is open
-                open_result = await db_handler.open_wallet(container, wallet_password)
-                if not open_result.get("success", False):
-                    logger.warning("Failed to open wallet, it might already be open")
-                
-                # Get current MEK info before rotation
-                old_mek_sql = """
-                SELECT 
-                    KEY_ID,
-                    HEX_MKID,
-                    TAG,
-                    ACTIVATION_TIME
-                FROM V$ENCRYPTION_KEYS
-                WHERE ROWNUM = 1
-                ORDER BY ACTIVATION_TIME DESC
-                """
-                
-                old_mek_result = await db_handler.execute_sql(old_mek_sql, container)
-                old_mek_info = None
-                if old_mek_result["success"] and old_mek_result["results"][0]["data"]:
-                    old_mek_info = old_mek_result["results"][0]["data"][0]
-                    if old_mek_info.get("ACTIVATION_TIME") and hasattr(old_mek_info["ACTIVATION_TIME"], "isoformat"):
-                        old_mek_info["ACTIVATION_TIME"] = old_mek_info["ACTIVATION_TIME"].isoformat()
-                    
-                    # Convert binary data to string representation
-                    if old_mek_info.get("HEX_MKID") and isinstance(old_mek_info["HEX_MKID"], bytes):
-                        old_mek_info["HEX_MKID"] = old_mek_info["HEX_MKID"].hex().upper()
-                    
-                    # Convert any other binary fields
-                    for field_name, field_value in old_mek_info.items():
-                        if isinstance(field_value, bytes):
-                            old_mek_info[field_name] = field_value.hex().upper()
-                
-                # Build rotation command with proper CONTAINER clause
-                if container.upper() in ["CDB$ROOT", "ALL"]:
-                    # Use CONTAINER=ALL for CDB-wide operations
-                    if force:
-                        rotate_sql = f"""
-                        ADMINISTER KEY MANAGEMENT SET KEY 
-                        FORCE KEYSTORE 
-                        IDENTIFIED BY "{wallet_password}" 
-                        WITH BACKUP USING '{backup_tag}'
-                        CONTAINER = ALL
-                        """
-                    else:
-                        rotate_sql = f"""
-                        ADMINISTER KEY MANAGEMENT SET KEY 
-                        IDENTIFIED BY "{wallet_password}" 
-                        WITH BACKUP USING '{backup_tag}'
-                        CONTAINER = ALL
-                        """
-                else:
-                    # Use specific container for PDB operations
-                    if force:
-                        rotate_sql = f"""
-                        ADMINISTER KEY MANAGEMENT SET KEY 
-                        FORCE KEYSTORE 
-                        IDENTIFIED BY "{wallet_password}" 
-                        WITH BACKUP USING '{backup_tag}'
-                        """
-                    else:
-                        rotate_sql = f"""
-                        ADMINISTER KEY MANAGEMENT SET KEY 
-                        IDENTIFIED BY "{wallet_password}" 
-                        WITH BACKUP USING '{backup_tag}'
-                        """
-                
-                # Execute rotation
-                rotate_result = await db_handler.execute_sql(rotate_sql, container)
-                
-                if not rotate_result.get("success", False):
-                    return json.dumps({
-                        "success": False,
-                        "error": f"MEK rotation failed: {rotate_result.get('error')}"
-                    })
-                
-                # Get new MEK info after rotation
-                new_mek_sql = """
-                SELECT 
-                    KEY_ID,
-                    HEX_MKID,
-                    TAG,
-                    ACTIVATION_TIME
-                FROM V$ENCRYPTION_KEYS
-                WHERE ACTIVATION_TIME >= SYSDATE - INTERVAL '5' MINUTE
-                ORDER BY ACTIVATION_TIME DESC
-                """
-                
-                new_mek_result = await db_handler.execute_sql(new_mek_sql, container)
-                
-                new_mek_info = None
-                if new_mek_result["success"] and new_mek_result["results"][0]["data"]:
-                    new_mek_info = new_mek_result["results"][0]["data"][0]
-                    if new_mek_info.get("ACTIVATION_TIME") and hasattr(new_mek_info["ACTIVATION_TIME"], "isoformat"):
-                        new_mek_info["ACTIVATION_TIME"] = new_mek_info["ACTIVATION_TIME"].isoformat()
-                    
-                    # Convert binary data to string representation
-                    if new_mek_info.get("HEX_MKID") and isinstance(new_mek_info["HEX_MKID"], bytes):
-                        new_mek_info["HEX_MKID"] = new_mek_info["HEX_MKID"].hex().upper()
-                    
-                    # Convert any other binary fields
-                    for field_name, field_value in new_mek_info.items():
-                        if isinstance(field_value, bytes):
-                            new_mek_info[field_name] = field_value.hex().upper()
-                
-                result_data = {
-                    "success": True,
-                    "operation": "rotate_oracle_mek",
-                    "connection": oracle_connection,
-                    "container": container,
-                    "backup_tag": backup_tag,
-                    "force_rotation": force,
-                    "previous_mek": old_mek_info,
-                    "new_mek": new_mek_info,
-                    "rotation_command": rotate_sql,
-                    "summary": {
-                        "rotation_successful": new_mek_info is not None,
-                        "new_key_id": new_mek_info["KEY_ID"] if new_mek_info else None,
-                        "container_scope": "ALL" if container.upper() in ["CDB$ROOT", "ALL"] else container
-                    },
-                    "timestamp": datetime.now().isoformat()
-                }
-                
-                logger.info(f"=== rotate_oracle_mek completed ===")
-                return json.dumps(result_data, indent=2)
-            
+                return json.dumps(result, indent=2)
+
             elif operation == "list":
                 logger.info(f"=== manage_oracle_keys(list) called ===")
                 # List Oracle encryption keys from v$encryption_keys view.

@@ -533,9 +533,20 @@ class OracleDatabase(DatabaseInterface):
             return []
 
     async def list_master_keys(self, key_type: Optional[str] = None) -> Dict[str, List[Dict[str, Any]]]:
-        """List master keys in Oracle"""
-        # Oracle uses MEKs (Master Encryption Keys)
-        mek_sql = """
+        """List master keys in Oracle, filtered by the current database."""
+        # Get the current database's unique name to filter keys accurately.
+        try:
+            db_name_result = await self.execute_sql("SELECT VALUE FROM V$PARAMETER WHERE NAME = 'db_name'")
+            if not db_name_result.get("success") or not db_name_result["results"][0]["data"]:
+                raise TDEOperationError("Could not determine current database name for key filtering.")
+            db_name = db_name_result["results"][0]["data"][0]["VALUE"]
+            logger.info(f"Filtering master keys for database: {db_name}")
+        except Exception as e:
+            logger.error(f"Failed to get database name for key filtering: {e}", exc_info=True)
+            raise TDEOperationError(f"Failed to get database name for key filtering: {e}")
+
+        # Oracle uses MEKs (Master Encryption Keys). Filter by CREATOR_DBNAME using a case-insensitive match.
+        mek_sql = f"""
         SELECT 
             KEY_ID,
             HEX_MKID,
@@ -550,6 +561,7 @@ class OracleDatabase(DatabaseInterface):
             BACKED_UP,
             CON_ID
         FROM V$ENCRYPTION_KEYS
+        WHERE UPPER(CREATOR_DBNAME) = UPPER('{db_name}')
         ORDER BY ACTIVATION_TIME DESC
         """
         
@@ -862,36 +874,75 @@ class OracleDatabase(DatabaseInterface):
     async def rotate_mek(
         self,
         container: str,
-        wallet_password: str,
-        backup_identifier: Optional[str] = None
+        wallet_password: Optional[str] = None,
+        backup_identifier: Optional[str] = None,
+        force: bool = False
     ) -> Dict[str, Any]:
-        """Rotate Master Encryption Key"""
-        # Parse wallet password
+        """Rotate Master Encryption Key in a wallet-aware manner."""
+        # 1. Determine wallet type
         try:
-            pwd_parts = self._parse_wallet_password(wallet_password)
-            if pwd_parts["domain"] == "root":
-                wallet_pwd = f"{pwd_parts['username']}:{pwd_parts['password']}"
-            else:
-                wallet_pwd = f"{pwd_parts['domain']}::{pwd_parts['username']}:{pwd_parts['password']}"
-        except ValueError as e:
-            return {"success": False, "error": str(e)}
+            wallet_info_sql = "SELECT WALLET_TYPE, STATUS FROM V$ENCRYPTION_WALLET"
+            wallet_result = await self.execute_sql(wallet_info_sql, container)
+            if not wallet_result.get("success") or not wallet_result["results"][0]["data"]:
+                raise TDEOperationError("Could not determine wallet type.")
+            
+            # Find the primary/single wallet for the container
+            # In a multi-wallet scenario (e.g., HSM + FILE), we care about the PRIMARY or SINGLE one.
+            wallets = wallet_result["results"][0]["data"]
+            primary_wallet = next((w for w in wallets if w.get("WALLET_ORDER") in ["PRIMARY", "SINGLE"]), wallets[0])
+            wallet_type = primary_wallet.get("WALLET_TYPE", "UNKNOWN")
+            
+            logger.info(f"Detected wallet type: {wallet_type} for container {container}")
+
+        except Exception as e:
+            logger.error(f"Failed to get wallet type: {e}", exc_info=True)
+            return {"success": False, "error": f"Failed to determine wallet type: {e}"}
+
+        # 2. Build rotation command based on wallet type
+        base_command = "ADMINISTER KEY MANAGEMENT SET KEY"
+        if force:
+            base_command += " FORCE KEYSTORE"
+
+        # Handle password requirement
+        if wallet_type.upper() == "PASSWORD":
+            if not wallet_password:
+                return {
+                    "success": False,
+                    "error": "Wallet is password-protected, but no wallet_password was provided.",
+                    "error_type": "MissingParameterError"
+                }
+            try:
+                pwd_parts = self._parse_wallet_password(wallet_password)
+                if pwd_parts["domain"] == "root":
+                    wallet_pwd_str = f"{pwd_parts['username']}:{pwd_parts['password']}"
+                else:
+                    wallet_pwd_str = f"{pwd_parts['domain']}::{pwd_parts['username']}:{pwd_parts['password']}"
+                base_command += f' IDENTIFIED BY "{wallet_pwd_str}"'
+            except ValueError as e:
+                return {"success": False, "error": str(e)}
         
+        # Add backup identifier
         if not backup_identifier:
             backup_identifier = f"{container}_mek_rotation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        base_command += f" WITH BACKUP USING '{backup_identifier}'"
         
-        # Rotate MEK
-        rotate_sql = f"""
-        ADMINISTER KEY MANAGEMENT SET KEY
-        IDENTIFIED BY "{wallet_pwd}"
-        WITH BACKUP USING '{backup_identifier}'
-        """
-        
+        # Add container clause for CDB-wide operations
+        if container.upper() in ["CDB$ROOT", "ALL"]:
+            base_command += " CONTAINER = ALL"
+
+        rotate_sql = base_command
+
+        # 3. Execute rotation
         result = await self.execute_sql(rotate_sql, container)
         
         return {
             "success": result.get("success", False),
+            "operation": "rotate_oracle_mek",
+            "connection": self.connection.name,
             "container": container,
+            "wallet_type_detected": wallet_type,
             "backup_identifier": backup_identifier,
+            "rotation_command": rotate_sql,
             "result": result
         }
 
