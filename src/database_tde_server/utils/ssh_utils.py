@@ -330,7 +330,7 @@ class OracleSSHManager:
             results = []
             
             # Create a script that will be executed to ensure proper environment
-            restart_script = f"""#!/bin/bash
+            restart_script = fr"""#!/bin/bash
 # Unset any existing Oracle environment to avoid conflicts
 unset ORACLE_SID
 unset ORACLE_HOME
@@ -652,7 +652,7 @@ EOF
             oracle_home = oracle_home or "/opt/oracle/product/21c/dbhome_1"
             
             # Create status check script
-            status_script = f"""#!/bin/bash
+            status_script = fr"""#!/bin/bash
 # Clear environment
 unset ORACLE_SID
 unset ORACLE_HOME
