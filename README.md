@@ -1,4 +1,4 @@
-# Thales CIpherTrust Data Security Platform CAKM MCP Server
+# Thales CipherTrust Data Security Platform CAKM MCP Server
 
 A Model Context Protocol (MCP) server for Database EKM/TDE operations using CipherTrust Application Key Management (CAKM).
 
