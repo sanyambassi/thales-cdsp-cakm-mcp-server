@@ -1,4 +1,4 @@
-# Thales CipherTrust Data Security Platform CAKM MCP Server
+# Thales CIpherTrust Data Security Platform CAKM MCP Server
 
 A Model Context Protocol (MCP) server for Database EKM/TDE operations using CipherTrust Application Key Management (CAKM).
 
@@ -21,6 +21,14 @@ A Model Context Protocol (MCP) server for Database EKM/TDE operations using Ciph
 > **🎥 [Watch Demo Video](https://www.youtube.com/watch?v=5GezP4_CEyY)** - See the MCP server in action managing database encryption
 
 ## 🚀 Quick Start
+
+### Clone the Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/sanyambassi/thales-cdsp-cakm-mcp-server.git
+cd thales-cdsp-cakm-mcp-server
+```
 
 ### Installation
 
