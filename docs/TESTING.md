@@ -40,24 +40,141 @@ When testing with raw JSON-RPC, you must follow this exact sequence:
 {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "list_database_connections", "arguments": {}}}
 ```
 
-## Testing SQL Server Tools
+## Testing SQL Server Features
+
+### SQL Server Key Management
 
 ```bash
-# NOTE: MCP Inspector CLI automatically handles the protocol initialization flow
-
-# Test 'manage_sql_keys' to list keys
+# List all SQL Server cryptographic keys
 npx @modelcontextprotocol/inspector --cli \
   uv run python -m database_tde_server \
   --method tools/call \
   --tool-name manage_sql_keys \
   --tool-args '{"operation": "list", "sql_connection": "prod_sql"}'
 
-# Test 'status_tde_ekm' to assess a SQL database
+# Create a new SQL Server asymmetric key
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_keys \
+  --tool-args '{"operation": "create", "sql_connection": "prod_sql", "key_name": "TDE_Test_Key", "provider_name": "CipherTrustEKM", "key_type": "RSA", "key_size": "2048"}'
+
+# Rotate the master key for a database
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_keys \
+  --tool-args '{"operation": "rotate_master", "sql_connection": "prod_sql", "database_name": "TestDB", "new_key_name": "TDE_New_Key", "provider_name": "CipherTrustEKM", "key_type": "RSA", "key_size": "2048", "ciphertrust_username": "admin", "ciphertrust_password": "password", "ciphertrust_domain": "root"}'
+
+# Rotate the database encryption key
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_keys \
+  --tool-args '{"operation": "rotate_dek", "sql_connection": "prod_sql", "database_name": "TestDB"}'
+
+# Drop an unused key
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_keys \
+  --tool-args '{"operation": "drop", "sql_connection": "prod_sql", "key_name": "Old_Key", "key_type": "RSA", "remove_from_provider": false}'
+
+# Drop all unused keys
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_keys \
+  --tool-args '{"operation": "drop_unused", "sql_connection": "prod_sql"}'
+```
+
+### SQL Server EKM Management
+
+```bash
+# List SQL Server EKM providers
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_ekm_objects \
+  --tool-args '{"operation": "manage_ekm_providers", "sql_connection": "prod_sql"}'
+
+# Manage SQL Server credentials
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_ekm_objects \
+  --tool-args '{"operation": "manage_credentials", "sql_connection": "prod_sql", "credential_name": "TDE_Credential", "show_mappings": true}'
+
+# Manage SQL Server logins
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_ekm_objects \
+  --tool-args '{"operation": "manage_logins", "sql_connection": "prod_sql", "tde_only": true}'
+```
+
+### SQL Server Database Encryption
+
+```bash
+# Encrypt a SQL Server database
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_encryption \
+  --tool-args '{"operation": "encrypt", "sql_connection": "prod_sql", "database_names": "TestDB", "provider_name": "CipherTrustEKM", "ciphertrust_username": "admin", "ciphertrust_password": "password", "key_name": "TDE_Key", "ciphertrust_domain": "root"}'
+
+# Encrypt multiple SQL Server databases
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_encryption \
+  --tool-args '{"operation": "encrypt", "sql_connection": "prod_sql", "database_names": "DB1,DB2,DB3", "provider_name": "CipherTrustEKM", "ciphertrust_username": "admin", "ciphertrust_password": "password", "key_name": "TDE_Key", "ciphertrust_domain": "root"}'
+
+# Encrypt all user databases
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_encryption \
+  --tool-args '{"operation": "encrypt", "sql_connection": "prod_sql", "database_names": "all databases", "provider_name": "CipherTrustEKM", "ciphertrust_username": "admin", "ciphertrust_password": "password", "key_name": "TDE_Key", "ciphertrust_domain": "root"}'
+
+# Decrypt a SQL Server database
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_encryption \
+  --tool-args '{"operation": "decrypt", "sql_connection": "prod_sql", "database_names": "TestDB"}'
+
+# Decrypt all encrypted databases
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name manage_sql_encryption \
+  --tool-args '{"operation": "decrypt", "sql_connection": "prod_sql", "database_names": "all encrypted databases"}'
+```
+
+### SQL Server Status and Assessment
+
+```bash
+# Get comprehensive SQL Server TDE assessment
 npx @modelcontextprotocol/inspector --cli \
   uv run python -m database_tde_server \
   --method tools/call \
   --tool-name status_tde_ekm \
-  --tool-args '{"operation": "assess_sql", "connection_name": "prod_sql", "database_name": "Db01"}'
+  --tool-args '{"operation": "assess_sql", "connection_name": "prod_sql"}'
+
+# Generate SQL Server TDE compliance report
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name status_tde_ekm \
+  --tool-args '{"operation": "compliance_report", "connection_name": "prod_sql"}'
+
+# Export TDE configuration
+npx @modelcontextprotocol/inspector --cli \
+  uv run python -m database_tde_server \
+  --method tools/call \
+  --tool-name status_tde_ekm \
+  --tool-args '{"operation": "export_config", "connection_name": "prod_sql", "format": "json"}'
 ```
 
 ## Testing Oracle TDE Features
@@ -116,17 +233,17 @@ npx @modelcontextprotocol/inspector --cli \
   uv run python -m database_tde_server \
   --method tools/call \
   --tool-name manage_oracle_tablespace_encryption \
-  --tool-args '{"operation": "status", "oracle_connection": "oracle_cdb1", "tablespace_name": "PLAIN_TS", "container": "PDB1"}'
+  --tool-args '{"operation": "status", "oracle_connection": "oracle_cdb1", "tablespace_name": "PLAINTEXT_TS", "container": "PDB1"}'
 
 # Test Oracle tablespace encryption
 npx @modelcontextprotocol/inspector --cli \
   uv run python -m database_tde_server \
   --method tools/call \
   --tool-name manage_oracle_tablespace_encryption \
-  --tool-args '{"operation": "encrypt", "oracle_connection": "oracle_cdb1", "tablespaces": "PLAIN_TS", "container": "PDB1"}'
+  --tool-args '{"operation": "encrypt", "oracle_connection": "oracle_cdb1", "tablespaces": "PLAINTEXT_TS", "container": "PDB1"}'
 ```
 
-### Test Oracle Wallet-Aware Key Rotation
+### Test Oracle Key Management
 
 ```bash
 # Test Oracle MEK rotation with auto-login/HSM wallet (no password required)
@@ -144,48 +261,9 @@ npx @modelcontextprotocol/inspector --cli \
   --tool-args '{"operation": "rotate", "oracle_connection": "oracle_cdb1", "container": "CDB$ROOT", "wallet_password": "your_wallet_password", "backup_tag": "password_protected_rotation_test"}'
 ```
 
-### Test Oracle TDE Deployment
-
-```bash
-# Test Oracle TDE HSM-only setup
-npx @modelcontextprotocol/inspector --cli \
-  uv run python -m database_tde_server \
-  --method tools/call \
-  --tool-name manage_oracle_tde_deployment \
-  --tool-args '{"operation": "setup_hsm_only", "oracle_connection": "oracle_cdb1", "ciphertrust_username": "admin", "ciphertrust_password": "password", "ciphertrust_domain": "root"}'
-
-# Test Oracle TDE setup with HSM and auto-login
-npx @modelcontextprotocol/inspector --cli \
-  uv run python -m database_tde_server \
-  --method tools/call \
-  --tool-name manage_oracle_tde_deployment \
-  --tool-args '{"operation": "setup_hsm_with_autologin", "oracle_connection": "oracle_cdb1", "ciphertrust_username": "admin", "ciphertrust_password": "password", "software_wallet_password": "wallet_pass", "ciphertrust_domain": "root"}'
-
-# Test adding auto-login to existing TDE
-npx @modelcontextprotocol/inspector --cli \
-  uv run python -m database_tde_server \
-  --method tools/call \
-  --tool-name manage_oracle_tde_deployment \
-  --tool-args '{"operation": "add_autologin", "oracle_connection": "oracle_cdb1", "ciphertrust_username": "admin", "ciphertrust_password": "password", "software_wallet_password": "wallet_pass", "ciphertrust_domain": "root"}'
-
-# Test migration from software wallet to HSM
-npx @modelcontextprotocol/inspector --cli \
-  uv run python -m database_tde_server \
-  --method tools/call \
-  --tool-name manage_oracle_tde_deployment \
-  --tool-args '{"operation": "migrate_software_to_hsm", "oracle_connection": "oracle_cdb1", "ciphertrust_username": "admin", "ciphertrust_password": "password", "software_wallet_password": "wallet_pass", "ciphertrust_domain": "root"}'
-
-# Test TDE status check
-npx @modelcontextprotocol/inspector --cli \
-  uv run python -m database_tde_server \
-  --method tools/call \
-  --tool-name manage_oracle_tde_deployment \
-  --tool-args '{"operation": "get_tde_status", "oracle_connection": "oracle_cdb1"}'
-```
-
 ## Testing with Raw JSON-RPC
 
-To manually test the new enhancements with raw JSON-RPC, follow this sequence:
+To manually test features with raw JSON-RPC, follow this sequence:
 
 ```json
 // Step 1: Initialize the server
@@ -197,47 +275,9 @@ To manually test the new enhancements with raw JSON-RPC, follow this sequence:
 // Step 3: List available tools
 {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
 
-// Step 4: Test wallet-aware key rotation on an auto-login wallet
-{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "manage_oracle_keys", "arguments": {"operation": "rotate", "oracle_connection": "oracle_cdb1", "container": "CDB$ROOT", "backup_tag": "auto_login_test"}}}
+// Step 4: Test SQL Server key listing
+{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "manage_sql_keys", "arguments": {"operation": "list", "sql_connection": "prod_sql"}}}
 
-// Step 5: Test database-filtered key listing 
+// Step 5: Test Oracle key listing
 {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "manage_oracle_keys", "arguments": {"operation": "list", "oracle_connection": "oracle_cdb1", "container": "CDB$ROOT"}}}
 ```
-
-## Oracle TDE Scenarios Reference
-
-These scenarios can be verified with the testing commands above:
-
-1. **HSM-only TDE:**
-   - V$ENCRYPTION_WALLET: HSM wallet OPEN (WALLET_ORDER='SINGLE')
-   - TDE_CONFIGURATION: 'KEYSTORE_CONFIGURATION=HSM' 
-   - Assessment: "HSM-only TDE (SINGLE wallet)", migration_status: "hsm_only"
-
-2. **HSM with Auto-login (Forward Migrated):**
-   - V$ENCRYPTION_WALLET: HSM wallet OPEN (WALLET_ORDER='PRIMARY'), AUTOLOGIN wallet OPEN (WALLET_ORDER='SECONDARY')
-   - TDE_CONFIGURATION: 'KEYSTORE_CONFIGURATION=HSM|FILE'
-   - Assessment: "HSM TDE with auto-login (forward migrated)", migration_status: "forward_migrated"
-
-3. **HSM with Auto-login (Not Migrated):**
-   - V$ENCRYPTION_WALLET: HSM wallet OPEN (WALLET_ORDER='PRIMARY'), AUTOLOGIN wallet OPEN_NO_MASTER_KEY (WALLET_ORDER='SECONDARY')
-   - TDE_CONFIGURATION: 'KEYSTORE_CONFIGURATION=HSM|FILE'
-   - Assessment: "HSM TDE with auto-login (not migrated)", migration_status: "hsm_with_autologin"
-
-4. **FILE wallet TDE:**
-   - V$ENCRYPTION_WALLET: PASSWORD wallet OPEN (WALLET_ORDER='SINGLE')
-   - TDE_CONFIGURATION: 'KEYSTORE_CONFIGURATION=FILE'
-   - Assessment: "FILE wallet TDE (password-based)", migration_status: "file_only"
-
-5. **FILE with Auto-login (Reverse Migrated):**
-   - V$ENCRYPTION_WALLET: PASSWORD wallet OPEN (WALLET_ORDER='PRIMARY'), AUTOLOGIN wallet OPEN (WALLET_ORDER='SECONDARY')
-   - TDE_CONFIGURATION: 'KEYSTORE_CONFIGURATION=FILE|HSM'
-   - Assessment: "FILE wallet TDE with auto-login (reverse migrated)", migration_status: "reverse_migrated"
-
-6. **FILE with Auto-login (Standard):**
-   - V$ENCRYPTION_WALLET: PASSWORD wallet OPEN (WALLET_ORDER='PRIMARY'), AUTOLOGIN wallet OPEN (WALLET_ORDER='SECONDARY')
-   - TDE_CONFIGURATION: 'KEYSTORE_CONFIGURATION=FILE'
-   - Assessment: "FILE wallet TDE (PRIMARY/SECONDARY config)", migration_status: "file_primary_secondary"
-
-7. **Misconfiguration Detection:**
-   - V$ENCRYPTION_WALLET: FILE wallet PRIMARY but TDE_CONFIGURATION='HSM|FILE'
-   - Assessment: "Misconfigured: HSM|FILE config but non-HSM primary", migration_status: "misconfigured"
