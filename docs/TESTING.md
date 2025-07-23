@@ -22,7 +22,7 @@ npx @modelcontextprotocol/inspector --cli \
   --method tools/list
 ```
 
-## Correct MCP Protocol Flow
+## MCP Protocol Flow
 
 When testing with raw JSON-RPC, you must follow this exact sequence:
 
