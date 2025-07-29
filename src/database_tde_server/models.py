@@ -1,5 +1,9 @@
 """
-Data models and enums for Database TDE MCP Server - ENHANCED
+Data models and enums for Database TDE MCP Server
+
+This module provides the data models and enumerations for the Database Transparent Data Encryption (TDE) 
+server. The encryption and key management functionality is powered by Thales CipherTrust Application 
+Key Management (CAKM) connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 """
 
 from typing import Optional, Dict, Any
