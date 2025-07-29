@@ -1,10 +1,28 @@
 """
-Unified encryption and decryption tools for SQL Server and Oracle databases
+Database encryption and decryption operations for SQL Server and Oracle.
 
-This module provides encryption and decryption tools for database Transparent Data Encryption (TDE).
-Database encryption and encryption key management are handled by Thales CipherTrust 
-Application Key Management (CAKM) connector, which is integrated with Thales CDSP
-(CipherTrust Data Security Platform).
+This module provides tools for enabling and disabling Transparent Data Encryption (TDE)
+on databases across different platforms. It handles the complete encryption process
+including infrastructure setup and key management.
+
+Available tools:
+- manage_sql_encryption: SQL Server database encryption with operations:
+  * encrypt: Enables TDE on databases (creates keys, logins, credentials automatically)
+  * decrypt: Disables TDE on databases
+  * Supports single database, multiple databases, or "all databases" targeting
+
+- manage_oracle_tablespace_encryption: Oracle tablespace encryption with operations:
+  * encrypt: Encrypts tablespaces using specified algorithms
+  * decrypt: Decrypts tablespaces
+  * Supports online/offline encryption methods
+  * Works with specific tablespaces or all tablespaces
+
+These tools automate the complex process of setting up TDE infrastructure and
+managing the encryption state of databases and tablespaces.
+
+All encryption and key management operations are handled by the Thales CipherTrust
+Application Key Management (CAKM) connector, which is integrated with the Thales
+CipherTrust Data Security Platform (CDSP).
 """
 
 import json

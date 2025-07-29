@@ -1,5 +1,10 @@
 """
-Utility modules for Database TDE MCP Server
+Utility modules for the Database TDE MCP Server.
+
+This package provides various utilities, including custom exceptions, validation
+functions, and SQL helpers. These utilities support the server's TDE operations,
+which are secured by the Thales CipherTrust Application Key Management (CAKM)
+connector and the Thales CipherTrust Data Security Platform (CDSP).
 """
 
 from .exceptions import (

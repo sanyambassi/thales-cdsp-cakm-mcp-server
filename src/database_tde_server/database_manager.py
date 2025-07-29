@@ -1,14 +1,14 @@
 """
-Database manager for handling multiple database types and connections
+Manages database connections for the TDE MCP Server.
 
-This module provides database connection management for Transparent Data Encryption (TDE)
-operations. Database encryption and encryption key management are handled by Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with Thales CDSP
-(CipherTrust Data Security Platform).
+This module is responsible for creating, managing, and providing handlers for
+various database types. All encryption and key management operations performed
+through these handlers are secured by the Thales CipherTrust Application Key
+Management (CAKM) connector and the Thales CipherTrust Data Security Platform (CDSP).
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Optional
 
 from .config import ConfigurationManager, DatabaseTDESettings
 from .database import DatabaseInterface, MSSQLServerDatabase, OracleDatabase  # Updated import
@@ -61,13 +61,32 @@ class DatabaseManager:
         self._handlers[connection_name] = handler
         return handler
     
-    def test_connection(self, connection_name: str) -> bool:
-        """Test database connection"""
+    async def test_connection(self, connection_name: str) -> bool:
+        """Tests a database connection."""
         try:
             handler = self.get_database_handler(connection_name)
-            # Note: connect() method would need to be implemented as sync or we need async context
-            # For now, just return True if handler is created successfully
-            return True
+            return await handler.connect()
         except Exception as e:
             logger.error(f"Connection test failed for {connection_name}: {e}")
             return False
+
+    async def cleanup_connections(self):
+        """Clean up all database connections and pools."""
+        logger.info("Cleaning up database connections...")
+        for conn_name, handler in self._handlers.items():
+            try:
+                # Only attempt to close pools for database types that use them (like Oracle)
+                if hasattr(handler, 'close_pool'):
+                    if hasattr(handler, 'pool') and handler.pool:
+                        await handler.close_pool()
+                        logger.info(f"Closed connection pool for {conn_name}")
+                    else:
+                        # For database types that don't use pools (like SQL Server)
+                        await handler.close_pool()
+                        logger.debug(f"Cleaned up connections for {conn_name} (no pool)")
+            except Exception as e:
+                logger.warning(f"Error closing connection pool for {conn_name}: {e}")
+        
+        # Clear the handlers dictionary
+        self._handlers.clear()
+        logger.info("Database cleanup completed.")

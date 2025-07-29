@@ -1,5 +1,39 @@
 """
-SQL query building utilities for Database TDE operations
+SQL query building and database connection utilities.
+
+This module provides utilities for constructing SQL queries and database connection
+strings for TDE operations across different database platforms. It includes query
+builders, identifier escaping, and connection string generation for SQL Server and Oracle.
+
+Available utilities:
+- SQLQueryBuilder: SQL Server query construction with methods:
+  * check_database_encryption: Queries for database encryption status
+  * list_cryptographic_providers: Lists EKM providers
+  * list_asymmetric_keys: Lists asymmetric keys
+  * list_symmetric_keys: Lists symmetric keys
+  * check_key_exists: Validates key existence
+
+- OracleQueryBuilder: Oracle query construction with methods:
+  * check_wallet_status: Queries wallet status
+  * list_encrypted_tablespaces: Lists encrypted tablespaces
+  * list_master_encryption_keys: Lists master encryption keys
+  * list_containers: Lists database containers
+  * check_tde_configuration: Queries TDE configuration
+
+- Connection utilities:
+  * build_connection_string: Generates database connection strings
+  * escape_sql_identifier: Escapes SQL identifiers for safe queries
+  * format_algorithm_name: Formats cryptographic algorithm names
+
+This module ensures:
+- Secure SQL query construction with proper escaping
+- Cross-platform database connectivity
+- Consistent query patterns for TDE operations
+- Safe identifier handling across database types
+
+All encryption and key management operations are handled by the Thales CipherTrust
+Application Key Management (CAKM) connector, which is integrated with the Thales
+CipherTrust Data Security Platform (CDSP).
 """
 
 import re

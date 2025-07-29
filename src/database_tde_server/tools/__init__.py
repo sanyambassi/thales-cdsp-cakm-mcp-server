@@ -1,19 +1,10 @@
 """
-Database TDE tools package
+Tool registration for the Database TDE MCP Server.
 
-This package provides tools for managing database Transparent Data Encryption (TDE).
-Database encryption and encryption key management are handled by Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with Thales CDSP
-(CipherTrust Data Security Platform).
-
-Available Oracle auto-login functionality:
-- manage_oracle_autologin with operation parameter:
-  * operation="setup" - Complete auto-login setup from scratch
-  * operation="setup_hsm" - Setup auto-login for HSM migration
-  * operation="create" - Create auto-login wallet from existing keystore
-  * operation="update" - Update auto-login wallet password
-  * operation="update_secret" - Update HSM credentials in auto-login wallet
-  * operation="remove" - Remove auto-login wallet
+This package contains all the tools available to the MCP server for performing
+TDE operations. All database encryption and key management are handled by the
+Thales CipherTrust Application Key Management (CAKM) connector, which integrates
+with the Thales CipherTrust Data Security Platform (CDSP).
 """
 
 from .key_management_tools import register_key_management_tools

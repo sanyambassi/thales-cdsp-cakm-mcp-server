@@ -1,5 +1,17 @@
 """
-Database connection management tools
+Database connection listing and management tools.
+
+This module provides tools for viewing and managing database connections configured
+in the TDE server. It allows users to list all available database connections with
+their basic information (host, port, type, etc.) without requiring authentication
+or connection testing.
+
+Available tools:
+- list_database_connections: Lists all configured database connections with their details
+
+All encryption and key management operations are handled by the Thales CipherTrust
+Application Key Management (CAKM) connector, which is integrated with the Thales
+CipherTrust Data Security Platform (CDSP).
 """
 
 import json

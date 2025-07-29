@@ -8,6 +8,8 @@ import asyncio
 import os
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
+from functools import partial
+import anyio
 
 from .base import DatabaseInterface
 from ..models import DatabaseConnection, EncryptionStatusInfo
@@ -25,6 +27,9 @@ class OracleDatabase(DatabaseInterface):
         self.current_container = None
         self.oracle_version = None
         
+        # Asynchronously initialize the connection pool
+        self.pool = None
+        
         # Initialize SSH manager for Oracle operations
         self.ssh_manager = None
         if hasattr(self.connection, 'ssh_config') and self.connection.ssh_config:
@@ -37,6 +42,25 @@ class OracleDatabase(DatabaseInterface):
         
         # Set Oracle environment variables from enhanced configuration
         self._setup_oracle_environment()
+
+    async def _create_pool(self):
+        """Creates an asynchronous connection pool."""
+        if self.pool:
+            return
+        try:
+            params = self._get_connection_params()
+            self.pool = oracledb.create_pool_async(**params, min=2, max=5, increment=1)
+            logger.info(f"Successfully created connection pool for {self.connection.name}")
+        except Exception as e:
+            logger.error(f"Failed to create connection pool for {self.connection.name}: {e}")
+            raise DatabaseConnectionError(f"Failed to create connection pool: {e}")
+
+    async def close_pool(self):
+        """Closes the connection pool."""
+        if self.pool:
+            await self.pool.close()
+            self.pool = None
+            logger.info(f"Connection pool for {self.connection.name} closed.")
 
     def _setup_oracle_environment(self):
         """Set Oracle environment variables from enhanced configuration"""
@@ -121,36 +145,43 @@ class OracleDatabase(DatabaseInterface):
         return connection_params
 
     async def connect(self) -> bool:
-        """Test database connectivity with enhanced configuration"""
+        """Test database connectivity and establish a connection pool."""
+        logger.info(f"Testing connection to Oracle: {self.connection.name}")
         try:
-            params = self._get_connection_params()
-            with oracledb.connect(**params) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT 1 FROM DUAL")
-                # Get Oracle version while we're connected
-                await self._detect_oracle_version(cursor)
-                return True
+            # Create a pool for this connection
+            await self._create_pool()
+
+            # Test the connection by acquiring and releasing a connection
+            async with self.pool.acquire() as conn:
+                logger.info(f"Connection to {self.connection.name} successful.")
+                async with conn.cursor() as cursor:
+                    await self._detect_oracle_version(cursor) # This logs the version
+            
+            # Close the pool after testing to prevent connection leaks
+            await self.close_pool()
+            return True
         except Exception as e:
-            logger.error(f"Connection test failed: {e}")
+            logger.error(f"Connection test failed for {self.connection.name}: {e}")
+            # Ensure pool is closed even on error
+            try:
+                if self.pool:
+                    await self.close_pool()
+            except Exception as cleanup_error:
+                logger.warning(f"Error closing pool during cleanup: {cleanup_error}")
             return False
 
     async def _detect_oracle_version(self, cursor) -> None:
         """Detect Oracle version for compatibility"""
         try:
-            cursor.execute("SELECT VERSION, VERSION_FULL FROM V$INSTANCE")
-            result = cursor.fetchone()
-            if result:
-                version_str = result[0]  # e.g., "19.0.0.0.0"
-                version_full = result[1]  # e.g., "Oracle Database 19c Enterprise Edition"
-                
-                # Parse major version
-                major_version = int(version_str.split('.')[0])
-                self.oracle_version = {
-                    "major": major_version,
-                    "version_string": version_str,
-                    "version_full": version_full
-                }
-                logger.info(f"Detected Oracle version: {version_full}")
+            await cursor.execute("SELECT banner FROM v$version")
+            rows = await cursor.fetchall()
+            for row in rows:
+                logger.info(f"Oracle Version for {self.connection.name}: {row[0]}")
+                print(f"  {self.connection.name} (oracle) Version: {row[0]}")
+                if "19c" in row[0].lower() or "21c" in row[0].lower():
+                    self.oracle_version = 19
+                elif "12c" in row[0].lower():
+                    self.oracle_version = 12
         except Exception as e:
             logger.warning(f"Could not detect Oracle version: {e}")
             # Default to safe assumptions
@@ -192,24 +223,45 @@ class OracleDatabase(DatabaseInterface):
             logger.error(f"Failed to switch to container {target_container}: {e}")
             return False
 
-    async def execute_sql(self, sql: str, container: Optional[str] = None, timeout: int = 60) -> Dict[str, Any]:
-        """Execute SQL command on Oracle with timeout protection"""
+    def _execute_sql_sync(self, sql: str, container: str = "CDB$ROOT") -> Dict[str, Any]:
+        """Synchronous method to execute SQL, designed to be run in a worker thread."""
+        params = self._get_connection_params()
+        
         try:
-            # Use asyncio.wait_for to enforce timeout
-            return await asyncio.wait_for(
-                self._execute_sql_internal(sql, container),
-                timeout=timeout
-            )
-        except asyncio.TimeoutError:
-            logger.error(f"SQL execution timeout after {timeout} seconds")
-            return {
-                "success": False,
-                "error": f"Operation timed out after {timeout} seconds. This may indicate connection issues or long-running operations.",
-                "timeout": timeout,
-                "sql_preview": sql[:200] + "..." if len(sql) > 200 else sql
-            }
+            with oracledb.connect(**params) as conn:
+                if conn.is_healthy():
+                    if container and conn.container_name != container:
+                        with conn.cursor() as cursor:
+                            cursor.execute(f"ALTER SESSION SET CONTAINER = {container}")
+                    
+                    with conn.cursor() as cursor:
+                        sql_stripped = sql.strip().rstrip(';')
+                        cursor.execute(sql_stripped)
+
+                        if any(sql_stripped.upper().startswith(s) for s in ["SELECT", "WITH", "SHOW"]):
+                            if cursor.description:
+                                columns = [col[0] for col in cursor.description]
+                                rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+                                return {"success": True, "results": [{"data": rows, "row_count": len(rows)}]}
+                            else:
+                                return {"success": True, "results": [{"data": [], "row_count": 0}]}
+                        else:
+                            conn.commit()
+                            return {"success": True, "results": [{"rows_affected": cursor.rowcount}]}
+                else:
+                    raise TDEOperationError("Database connection is not healthy.")
         except Exception as e:
-            logger.error(f"SQL execution error: {e}")
+            raise e
+
+    async def execute_sql(self, sql: str, container: str = "CDB$ROOT") -> Dict[str, Any]:
+        """Execute SQL command on Oracle in a non-blocking manner."""
+        try:
+            return await anyio.to_thread.run_sync(
+                self._execute_sql_sync, sql, container
+            )
+        except Exception as e:
+            logger.error(f"Failed to execute SQL on {self.connection.name} (container: {container}): {e}")
+            logger.error(f"Failed SQL: {sql}")
             return {"success": False, "error": str(e)}
     
     async def _execute_sql_internal(self, sql: str, container: Optional[str] = None) -> Dict[str, Any]:
@@ -1637,4 +1689,14 @@ class OracleDatabase(DatabaseInterface):
     async def rotate_master_key(self, *args, **kwargs) -> Dict[str, Any]:
         """Not applicable for Oracle - use rotate_mek instead"""
         return {"success": False, "error": "Use rotate_mek for Oracle TDE"}
+
+    async def get_version(self) -> str:
+        """Get the Oracle database version string."""
+        # V$VERSION provides detailed component versions
+        result = await self.execute_sql("SELECT BANNER FROM V$VERSION WHERE BANNER LIKE 'Oracle Database%'")
+        if result.get("success") and result["results"][0].get("data"):
+            return result["results"][0]["data"][0]['BANNER']
+        else:
+            error = result.get("error", "Unknown error")
+            raise TDEOperationError(f"Failed to get Oracle version: {error}")
         

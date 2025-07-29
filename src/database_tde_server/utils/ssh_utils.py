@@ -1,3 +1,27 @@
+"""
+SSH connectivity utilities for remote Oracle database operations.
+
+This module provides SSH connection management and remote command execution capabilities
+for Oracle TDE operations that require access to database servers. It handles secure
+remote connections, file transfers, and command execution on Oracle database hosts.
+
+Key features:
+- SSH connection management with password and key-based authentication
+- Remote command execution on Oracle database servers
+- File transfer operations for wallet and configuration files
+- Oracle-specific SSH operations for TDE setup and management
+- Connection pooling and error handling for reliable remote operations
+
+This utility is essential for Oracle TDE operations that require:
+- Remote database restarts during TDE configuration
+- Wallet file management on database servers
+- Configuration file updates on remote hosts
+- Automated TDE deployment across multiple servers
+
+All encryption and key management operations are handled by the Thales CipherTrust
+Application Key Management (CAKM) connector, which is integrated with the Thales
+CipherTrust Data Security Platform (CDSP).
+"""
 import paramiko
 import logging
 import time

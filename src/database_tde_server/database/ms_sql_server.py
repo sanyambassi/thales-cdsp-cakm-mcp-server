@@ -7,6 +7,9 @@ import logging
 import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from functools import partial
+import anyio
+import aioodbc
 
 from .base import DatabaseInterface
 from ..models import DatabaseConnection, EncryptionStatusInfo
@@ -21,6 +24,8 @@ class MSSQLServerDatabase(DatabaseInterface):
     def __init__(self, connection: DatabaseConnection, connection_timeout: int = 30):
         super().__init__(connection)
         self.connection_timeout = connection_timeout
+        # SQL Server doesn't use connection pooling like Oracle, so set to None
+        self.pool = None
 
     def _get_connection_string(self, database: Optional[str] = None) -> str:
         """Generate SQL Server connection string"""
@@ -54,77 +59,77 @@ class MSSQLServerDatabase(DatabaseInterface):
         return conn_str
 
     async def connect(self) -> bool:
-        """Test database connectivity"""
+        """Test database connectivity and log the version."""
+        logger.info(f"Testing connection to SQL Server: {self.connection.name}")
+        conn_string = self._get_connection_string()
         try:
-            conn_string = self._get_connection_string()
-            with pyodbc.connect(conn_string, timeout=self.connection_timeout):
-                return True
+            cnxn = await aioodbc.connect(dsn=conn_string, timeout=self.connection_timeout)
+            logger.info(f"Connection to {self.connection.name} successful.")
+            async with cnxn.cursor() as cursor:
+                await cursor.execute("SELECT @@VERSION")
+                row = await cursor.fetchone()
+                if row:
+                    # Normalize whitespace in the version string
+                    version_string = " ".join(row[0].split())
+                    logger.info(f"SQL Server Version for {self.connection.name}: {version_string}")
+                    print(f"  {self.connection.name} (sqlserver) Version: {version_string}")
+            await cnxn.close()
+            return True
         except Exception as e:
-            logger.error(f"Connection test failed: {e}")
+            logger.error(f"Connection test failed for {self.connection.name}: {e}")
             return False
+
+    async def close_pool(self):
+        """Close any open connections (SQL Server doesn't use connection pooling like Oracle)."""
+        # SQL Server connections are closed after each operation, so this is mostly for consistency
+        # No actual pool to close, but we can perform any necessary cleanup here
+        logger.debug(f"No connection pool to close for SQL Server connection: {self.connection.name}")
+        # SQL Server connections are managed per-operation and automatically closed
+        # No additional cleanup needed
+
+    async def get_version(self) -> str:
+        """Get the database version string."""
+        conn_string = self._get_connection_string()
+        try:
+            cnxn = await aioodbc.connect(dsn=conn_string, timeout=self.connection_timeout)
+            async with cnxn.cursor() as cursor:
+                await cursor.execute("SELECT @@VERSION")
+                row = await cursor.fetchone()
+                if not row:
+                    raise TDEOperationError("Failed to fetch version from SQL Server.")
+                # Normalize whitespace in the version string
+                version_string = " ".join(row[0].split())
+            await cnxn.close()
+            return version_string
+        except Exception as e:
+            logger.error(f"Failed to get SQL Server version for {self.connection.name}: {e}")
+            raise TDEOperationError(f"Failed to get SQL Server version for {self.connection.name}") from e
 
     async def execute_sql(self, sql: str, database: Optional[str] = None) -> Dict[str, Any]:
         """Execute SQL command on SQL Server"""
+        conn_string = self._get_connection_string(database)
+        sql_stripped = sql.strip()
+        
         try:
-            conn_string = self._get_connection_string(database)
-        
-            # Normalize SQL for checking
-            sql_stripped = sql.strip()
-            sql_upper = sql_stripped.upper()
-        
-            # Commands that need autocommit anywhere in the batch
-            autocommit_commands = [
-                'ALTER DATABASE',
-                'CREATE ASYMMETRIC KEY',
-                'CREATE SYMMETRIC KEY',
-                'CREATE CREDENTIAL',
-                'CREATE LOGIN',
-                'ALTER LOGIN',
-                'ALTER CREDENTIAL',
-                'DROP CREDENTIAL',
-                'CREATE DATABASE ENCRYPTION KEY',
-                'ALTER DATABASE ENCRYPTION KEY'
-            ]
-        
-            # Turn on autocommit if any of those commands appear
-            needs_autocommit = any(cmd in sql_upper for cmd in autocommit_commands)
-        
-            if needs_autocommit:
-                # Run entire batch in autocommit mode
-                with pyodbc.connect(conn_string, timeout=self.connection_timeout, autocommit=True) as conn:
-                    cursor = conn.cursor()
-                    # Split into batches on GO
+            async with aioodbc.connect(dsn=conn_string, timeout=self.connection_timeout, autocommit=True) as cnxn:
+                async with cnxn.cursor() as cursor:
+                    results = []
                     batches = [batch.strip() for batch in sql_stripped.split('\nGO\n') if batch.strip()]
+                    
                     for batch in batches:
-                        cursor.execute(batch)
-                    return {"success": True, "results": [{"rows_affected": cursor.rowcount}]}
-        
-            # Regular (transactional) execution
-            with pyodbc.connect(conn_string, timeout=self.connection_timeout) as conn:
-                cursor = conn.cursor()
-            
-                # Split into batches on GO
-                statements = [stmt.strip() for stmt in sql_stripped.split('\nGO\n') if stmt.strip()]
-                results = []
-            
-                for statement in statements:
-                    cursor.execute(statement)
-                
-                    # If it's a SELECT-like statement, fetch rows
-                    stmt_upper = statement.upper()
-                    if stmt_upper.startswith(('SELECT', 'SHOW', 'DESCRIBE')):
-                        if cursor.description:
+                        await cursor.execute(batch)
+                        
+                        stmt_upper = batch.upper()
+                        if stmt_upper.startswith(('SELECT', 'SHOW', 'DESCRIBE')) and cursor.description:
                             columns = [col[0] for col in cursor.description]
-                            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                            results.append({"data": rows, "row_count": len(rows)})
+                            rows = await cursor.fetchall()
+                            results.append({"data": [dict(zip(columns, row)) for row in rows], "row_count": len(rows)})
                         else:
-                            results.append({"data": [], "row_count": 0})
-                    else:
-                        conn.commit()
-                        results.append({"rows_affected": cursor.rowcount})
-            
-                return {"success": True, "results": results}
-    
+                            results.append({"rows_affected": cursor.rowcount})
+                    
+                    await cnxn.commit()
+                    return {"success": True, "results": results}
+
         except Exception as e:
             logger.error(f"SQL execution error: {e}")
             logger.error(f"Failed SQL: {sql}")

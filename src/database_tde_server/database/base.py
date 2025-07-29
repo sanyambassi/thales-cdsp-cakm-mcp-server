@@ -19,13 +19,18 @@ class DatabaseInterface(ABC):
         pass
     
     @abstractmethod
-    async def execute_sql(self, sql: str, database: Optional[str] = None) -> Dict[str, Any]:
+    async def get_version(self) -> str:
+        """Get the database version string"""
+        pass
+    
+    @abstractmethod
+    async def execute_sql(self, sql: str, **kwargs) -> Dict[str, Any]:
         """Execute SQL command"""
         pass
     
     @abstractmethod
     async def check_encryption_status(self, database_name: Optional[str] = None) -> List[EncryptionStatusInfo]:
-        """Check encryption status of databases"""
+        """Check encryption status"""
         pass
     
     @abstractmethod

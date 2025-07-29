@@ -1,5 +1,30 @@
 """
-Validation helpers for Database TDE operations
+Input validation utilities for TDE operations and parameters.
+
+This module provides comprehensive validation functions for user inputs used in TDE
+operations, ensuring data integrity and security before processing database encryption
+requests. It validates database names, key names, connection parameters, and other
+critical TDE configuration values.
+
+Available validation functions:
+- validate_database_name: Validates database name format and restrictions
+- validate_key_name: Validates cryptographic key name format and security requirements
+- validate_connection_name: Validates database connection identifier names
+- validate_key_parameters: Validates key type and size combinations
+- validate_ciphertrust_domain: Validates CipherTrust domain names
+- validate_provider_name: Validates EKM provider names
+- parse_database_list: Parses and validates database name lists
+
+This module ensures:
+- Consistent naming conventions across database platforms
+- Security compliance for cryptographic key names
+- Proper parameter validation before database operations
+- Error prevention through input sanitization
+- Cross-platform compatibility for database identifiers
+
+All encryption and key management operations are handled by the Thales CipherTrust
+Application Key Management (CAKM) connector, which is integrated with the Thales
+CipherTrust Data Security Platform (CDSP).
 """
 
 import re
