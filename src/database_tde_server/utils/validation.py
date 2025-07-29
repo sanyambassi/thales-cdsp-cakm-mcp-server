@@ -1,30 +1,18 @@
 """
-Input validation utilities for TDE operations and parameters.
+Input validation utilities for Database TDE operations
 
-This module provides comprehensive validation functions for user inputs used in TDE
-operations, ensuring data integrity and security before processing database encryption
-requests. It validates database names, key names, connection parameters, and other
-critical TDE configuration values.
+This module provides validation utilities for ensuring data integrity in Transparent Data Encryption (TDE) operations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available validation functions:
-- validate_database_name: Validates database name format and restrictions
-- validate_key_name: Validates cryptographic key name format and security requirements
-- validate_connection_name: Validates database connection identifier names
-- validate_key_parameters: Validates key type and size combinations
-- validate_ciphertrust_domain: Validates CipherTrust domain names
-- validate_provider_name: Validates EKM provider names
-- parse_database_list: Parses and validates database name lists
-
-This module ensures:
-- Consistent naming conventions across database platforms
-- Security compliance for cryptographic key names
-- Proper parameter validation before database operations
-- Error prevention through input sanitization
-- Cross-platform compatibility for database identifiers
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- validate_database_connection: Validates database connection parameters and configuration
+- validate_tde_parameters: Validates TDE-specific parameters and settings
+- validate_encryption_algorithm: Validates encryption algorithm specifications
+- validate_key_size: Validates encryption key size requirements
+- validate_container_name: Validates Oracle container database names
+- validate_wallet_path: Validates Oracle wallet path and accessibility
+- validate_ssh_config: Validates SSH configuration parameters
 """
 
 import re

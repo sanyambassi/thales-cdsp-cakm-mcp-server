@@ -1,31 +1,17 @@
 """
-Oracle TDE deployment and setup automation tools.
+Oracle TDE deployment and setup tools
 
-This module provides comprehensive tools for deploying and setting up Oracle Transparent
-Data Encryption (TDE) with different configurations and migration scenarios. It handles
-complex deployment operations with automated error handling and status detection.
+This module provides tools for deploying and setting up Oracle Transparent Data Encryption (TDE).
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available tools:
-- oracle_tde_deployment: Complete TDE deployment automation with operations:
-  * setup_hsm_only: HSM-only TDE setup (no auto-login)
-  * setup_hsm_with_autologin: Complete TDE setup with HSM + auto-login
-  * add_autologin: Add auto-login to existing TDE database
-  * migrate_software_to_hsm: Migrate software wallet to HSM
-  * get_tde_status: Check current TDE status and configuration
-
-This tool automates complex Oracle TDE deployment scenarios including:
-- Initial TDE setup with different configurations
-- Migration between software and HSM-based TDE
-- Auto-login wallet creation and management
-- Comprehensive status checking and validation
-- Automated database restarts when required
-
-These deployment tools handle the most complex Oracle TDE setup scenarios with
-reliable error handling and comprehensive status reporting.
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- oracle_tde_deployment: Complete Oracle TDE deployment operations
+  - Operations: setup_hsm_only, setup_hsm_with_autologin, add_autologin, migrate_software_to_hsm, get_tde_status
+  - Provides complete TDE infrastructure setup from scratch
+  - Supports HSM-only and HSM-with-autologin configurations
+  - Handles migration from software to HSM keystores
+  - Includes comprehensive status checking and validation
 """
 
 import json

@@ -1,10 +1,11 @@
 """
-A Model Context Protocol (MCP) server for managing database Transparent Data Encryption (TDE).
+Database TDE MCP Server
 
-This server provides tools to perform TDE operations on supported databases. Database
-encryption and key management are handled by the Thales CipherTrust Application Key
-Management (CAKM) connector, which is integrated with the Thales CipherTrust Data
-Security Platform (CDSP).
+A Model Context Protocol server for database Transparent Data Encryption (TDE) operations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application 
+Key Management (CAKM) connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
+
+This server provides tools for managing TDE across multiple database platforms including SQL Server and Oracle.
 """
 
 __version__ = "1.0.0"  # Fixed syntax

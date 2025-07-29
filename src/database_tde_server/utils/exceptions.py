@@ -1,29 +1,18 @@
 """
-Custom exception classes for TDE operations and error handling.
+Custom exception classes for Database TDE operations
 
-This module defines specialized exception classes for handling errors that occur
-during Transparent Data Encryption (TDE) operations across different database
-platforms. These exceptions provide detailed error information and context for
-debugging and error handling.
+This module defines custom exception classes for handling errors in Transparent Data Encryption (TDE) operations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available exception classes:
-- DatabaseTDEError: Base exception for all TDE-related errors
-- DatabaseConnectionError: Errors related to database connectivity issues
-- TDEOperationError: Errors during TDE encryption/decryption operations
-- ConfigurationError: Errors in TDE configuration and setup
-- KeyManagementError: Errors in cryptographic key operations
-- ValidationError: Errors in input validation and parameter checking
-
-These exceptions provide:
-- Detailed error messages with context information
-- Specific error types for different failure scenarios
-- Consistent error handling across database platforms
-- Debugging information for troubleshooting TDE issues
-- Structured error reporting for logging and monitoring
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- DatabaseConnectionError: Raised when database connection operations fail
+- TDEOperationError: Raised when TDE-specific operations encounter errors
+- ConfigurationError: Raised when configuration validation or loading fails
+- ValidationError: Raised when input validation fails
+- SSHConnectionError: Raised when SSH connection operations fail
+- OracleOperationError: Raised when Oracle-specific operations encounter errors
+- SQLServerOperationError: Raised when SQL Server-specific operations encounter errors
 """
 
 class DatabaseTDEError(Exception):

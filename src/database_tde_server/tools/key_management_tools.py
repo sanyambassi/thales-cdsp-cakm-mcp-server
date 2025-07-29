@@ -1,30 +1,21 @@
 """
-Cryptographic key lifecycle management tools for SQL Server and Oracle.
+Database TDE key management tools
 
-This module provides tools for managing the complete lifecycle of cryptographic keys
-used in Transparent Data Encryption (TDE) operations across different database platforms.
+This module provides tools for managing encryption keys for Transparent Data Encryption (TDE) operations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available tools:
-- manage_sql_keys: SQL Server key management with operations:
-  * create: Creates new asymmetric keys in EKM provider
-  * list: Lists all asymmetric and symmetric keys
-  * drop: Removes keys from SQL Server and optionally from EKM
-  * drop_unused: Removes keys not actively encrypting databases
-  * rotate_master: Rotates asymmetric keys for databases
-  * rotate_dek: Rotates database encryption keys
-
-- manage_oracle_keys: Oracle key management with operations:
-  * list: Lists master encryption keys in wallets
-  * backup: Creates backup of keys with tags
-  * restore: Restores keys from backups
-  * rotate: Rotates master encryption keys
-
-These tools handle the creation, rotation, backup, and cleanup of cryptographic keys
-that protect database encryption keys (DEKs) and master encryption keys (MEKs).
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- manage_sql_keys: Manage SQL Server cryptographic keys (create, list, drop, rotate)
+  - Operations: create, list, drop, drop_unused, rotate_master, rotate_dek
+  - Creates asymmetric keys in EKM providers
+  - Manages key lifecycle and rotation
+  - Handles key cleanup and validation
+- manage_oracle_keys: Manage Oracle Master Encryption Keys (generate, rotate, list)
+  - Operations: generate, rotate, list
+  - Generates Master Encryption Keys (MEK) for Oracle
+  - Rotates existing keys with backup creation
+  - Lists key information and status
 """
 
 import json

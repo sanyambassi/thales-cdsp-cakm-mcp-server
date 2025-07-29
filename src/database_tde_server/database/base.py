@@ -1,5 +1,11 @@
 """
 Base database interface for TDE operations
+
+This module defines the base interface for database Transparent Data Encryption (TDE) operations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
+
+Provides abstract base classes and interfaces for implementing TDE operations across different database platforms.
 """
 
 from abc import ABC, abstractmethod
@@ -19,18 +25,13 @@ class DatabaseInterface(ABC):
         pass
     
     @abstractmethod
-    async def get_version(self) -> str:
-        """Get the database version string"""
-        pass
-    
-    @abstractmethod
-    async def execute_sql(self, sql: str, **kwargs) -> Dict[str, Any]:
+    async def execute_sql(self, sql: str, database: Optional[str] = None) -> Dict[str, Any]:
         """Execute SQL command"""
         pass
     
     @abstractmethod
     async def check_encryption_status(self, database_name: Optional[str] = None) -> List[EncryptionStatusInfo]:
-        """Check encryption status"""
+        """Check encryption status of databases"""
         pass
     
     @abstractmethod

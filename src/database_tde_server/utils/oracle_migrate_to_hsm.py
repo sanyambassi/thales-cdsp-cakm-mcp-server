@@ -1,40 +1,17 @@
 """
-Oracle software keystore to HSM migration utilities.
+Oracle TDE migration to HSM utilities
 
-This module provides utilities for migrating existing Oracle software-based TDE
-keystores to Hardware Security Module (HSM) keystores. It handles the complete
-migration process while preserving existing encryption and optionally adding
-auto-login functionality.
+This module provides utilities for migrating Oracle Transparent Data Encryption (TDE) from software keystores to HSM.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
-Migration process includes:
-- Backup of existing software keystore and keys
-- HSM keystore creation and configuration
-- Key migration from software to HSM storage
-- Database parameter updates for HSM configuration
-- Optional auto-login wallet creation
-- Validation of migrated HSM-based TDE
-
-This utility is used for:
-- Upgrading software-based TDE to HSM-based TDE
-- Compliance requirements for HSM key storage
-- Security enhancement of existing TDE deployments
-- Migration scenarios with or without auto-login
-
-Migration options:
-- HSM-only migration (manual wallet opening)
-- HSM migration with auto-login (automated startup)
-- Preserve existing auto-login if present
-- Add auto-login during migration
-
-Key benefits:
-- Enhanced security with HSM key storage
-- Preserves existing encryption and data
-- Non-disruptive migration process
-- Optional convenience features (auto-login)
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+Available utilities:
+- migrate_to_hsm: Migrate Oracle TDE from software to HSM
+  - Migrates software keystores to HSM
+  - Handles wallet conversion and backup
+  - Configures HSM integration and settings
+  - Validates migration completion
+  - Supports auto-login preservation during migration
 """
 
 import logging

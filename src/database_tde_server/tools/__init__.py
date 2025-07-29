@@ -1,10 +1,27 @@
 """
-Tool registration for the Database TDE MCP Server.
+Database TDE tools package
 
-This package contains all the tools available to the MCP server for performing
-TDE operations. All database encryption and key management are handled by the
-Thales CipherTrust Application Key Management (CAKM) connector, which integrates
-with the Thales CipherTrust Data Security Platform (CDSP).
+This package provides tools for managing database Transparent Data Encryption (TDE).
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
+
+Available tools:
+- list_database_connections: List all configured database connections
+- status_tde_ekm: Comprehensive TDE status assessment for SQL Server and Oracle
+  - SQL Server operations: assess_sql, compliance_report, best_practices, export_config, validate_setup
+  - Oracle operations: assess_oracle, list_containers, list_tablespaces
+- manage_sql_ekm_objects: Manage SQL Server EKM objects (providers, credentials, logins)
+- manage_sql_keys: Manage SQL Server cryptographic keys (create, list, drop, rotate)
+- manage_oracle_keys: Manage Oracle Master Encryption Keys (generate, rotate, list)
+- manage_sql_encryption: Encrypt/decrypt SQL Server databases
+- manage_oracle_tablespace_encryption: Encrypt Oracle tablespaces and list encryption status
+- manage_oracle_wallet: Comprehensive Oracle wallet management
+  - Operations: open, close, status, backup, merge, autologin
+  - Autologin operations: create, update, remove, setup, setup_hsm, update_secret
+- manage_oracle_configuration: Manage Oracle TDE configuration parameters
+  - Operations: get, set, verify
+- oracle_tde_deployment: Complete Oracle TDE deployment operations
+  - Operations: setup_hsm_only, setup_hsm_with_autologin, add_autologin, migrate_software_to_hsm, get_tde_status
 """
 
 from .key_management_tools import register_key_management_tools

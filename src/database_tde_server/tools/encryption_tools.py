@@ -1,28 +1,21 @@
 """
-Database encryption and decryption operations for SQL Server and Oracle.
+Database TDE encryption and decryption tools
 
-This module provides tools for enabling and disabling Transparent Data Encryption (TDE)
-on databases across different platforms. It handles the complete encryption process
-including infrastructure setup and key management.
+This module provides tools for encrypting and decrypting databases and tablespaces for Transparent Data Encryption (TDE)
+operations. Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available tools:
-- manage_sql_encryption: SQL Server database encryption with operations:
-  * encrypt: Enables TDE on databases (creates keys, logins, credentials automatically)
-  * decrypt: Disables TDE on databases
-  * Supports single database, multiple databases, or "all databases" targeting
-
-- manage_oracle_tablespace_encryption: Oracle tablespace encryption with operations:
-  * encrypt: Encrypts tablespaces using specified algorithms
-  * decrypt: Decrypts tablespaces
-  * Supports online/offline encryption methods
-  * Works with specific tablespaces or all tablespaces
-
-These tools automate the complex process of setting up TDE infrastructure and
-managing the encryption state of databases and tablespaces.
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- manage_sql_encryption: Encrypt/decrypt SQL Server databases
+  - Operations: encrypt, decrypt
+  - Supports single database or multiple databases
+  - Handles "all databases" and "all encrypted databases" targeting
+  - Automatically creates TDE infrastructure when needed
+- manage_oracle_tablespace_encryption: Encrypt Oracle tablespaces and list encryption status
+  - Operations: encrypt, list_tablespaces, list_encrypted, list, status
+  - Supports container-aware operations across CDB and PDBs
+  - Handles online and offline encryption methods
+  - Provides detailed encryption status and progress monitoring
 """
 
 import json

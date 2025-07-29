@@ -1,11 +1,12 @@
 """
-Main entry point for the Database TDE MCP Server.
+Main MCP server for Database TDE operations
 
-This module initializes and runs the FastMCP server, registering all the necessary
-tools for TDE operations. The server's functionality for database encryption and
-key management is provided by the Thales CipherTrust Application Key Management
-(CAKM) connector, which is integrated with the Thales CipherTrust Data Security
-Platform (CDSP).
+This module implements the Model Context Protocol (MCP) server for Database Transparent
+Data Encryption (TDE) operations. Database encryption and encryption key management are
+handled by Thales CipherTrust Application Key Management (CAKM) connector, which is
+integrated with Thales CDSP (CipherTrust Data Security Platform).
+
+Provides the main entry point for the server and handles tool registration and execution.
 """
 import asyncio
 import logging
@@ -68,40 +69,18 @@ def main():
     
     args = parser.parse_args()
     
-    async def run_tests():
+    if args.test_connections:
+        # Test connections mode
         db_manager = DatabaseManager()
         print("Testing database connections...")
-        successful_connections = 0
-        
-        try:
-            for conn_name, conn in db_manager.config.connections.items():
-                success = await db_manager.test_connection(conn_name)
-                db_type = conn.db_type.value
-                if success:
-                    status = "✅ SUCCESS"
-                    print(f"  {conn_name} ({db_type}): {status}\n")
-                    successful_connections += 1
-                else:
-                    status = "❌ FAILED"
-                    print(f"  {conn_name} ({db_type}): {status}\n")
-            
-            print(f"--- Test complete. {successful_connections} / {len(db_manager.config.connections)} connections successful. ---")
-        
-        finally:
-            # Clean up database connections and pools
-            print("Cleaning up database connections...")
+        for conn_name, conn in db_manager.config.connections.items():
             try:
-                await db_manager.cleanup_connections()
-                print("Database cleanup completed.")
+                success = db_manager.test_connection(conn_name)
+                db_type = conn.db_type.value
+                status = "✅ SUCCESS" if success else "❌ FAILED"
+                print(f"  {conn_name} ({db_type}): {status}")
             except Exception as e:
-                print(f"Warning: Error during cleanup: {e}")
-        
-        # Force exit after cleanup
-        import sys
-        sys.exit(0)
-
-    if args.test_connections:
-        anyio.run(run_tests)
+                print(f"  {conn_name}: ❌ ERROR - {e}")
         return
     
     # Normal server mode

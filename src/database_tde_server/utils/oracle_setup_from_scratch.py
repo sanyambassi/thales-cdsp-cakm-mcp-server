@@ -1,27 +1,22 @@
 """
-Complete Oracle TDE setup from scratch with HSM and auto-login configuration.
+Oracle TDE setup from scratch utilities
 
-This module provides a comprehensive utility for setting up Oracle Transparent Data
-Encryption (TDE) on a database that has no existing TDE configuration. It handles
-the complete setup process including HSM integration and auto-login wallet creation.
+This module provides utilities for complete Oracle Transparent Data Encryption (TDE) setup from scratch.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
-Setup process includes:
-- Oracle environment configuration (ORACLE_HOME, ORACLE_SID, TNS_ADMIN)
-- HSM keystore creation and configuration
-- Software wallet creation for auto-login functionality
-- Auto-login wallet setup for automated database startup
-- Database parameter configuration for TDE
-- Comprehensive validation and testing
-
-This utility is used for:
-- Initial TDE deployment on new Oracle databases
-- Complete TDE setup with both HSM and auto-login capabilities
-- Automated setup processes for multiple database instances
-- Standardized TDE configuration across Oracle environments
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+Available utilities:
+- setup_oracle_tde_from_scratch: Complete Oracle TDE setup from scratch
+  - Creates Oracle wallet directory and structure
+  - Generates Master Encryption Keys (MEK)
+  - Configures TDE parameters and settings
+  - Sets up auto-login functionality
+  - Validates complete TDE setup
+- setup_oracle_tde_with_hsm: Oracle TDE setup with HSM integration
+  - Configures HSM provider and credentials
+  - Sets up HSM-based key management
+  - Creates HSM-enabled wallets
+  - Validates HSM integration
 """
 
 import logging

@@ -1,39 +1,24 @@
 """
-SQL query building and database connection utilities.
+SQL query building utilities for Database TDE operations
 
-This module provides utilities for constructing SQL queries and database connection
-strings for TDE operations across different database platforms. It includes query
-builders, identifier escaping, and connection string generation for SQL Server and Oracle.
+This module provides utilities for building and managing SQL queries for Transparent Data Encryption (TDE) operations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available utilities:
-- SQLQueryBuilder: SQL Server query construction with methods:
-  * check_database_encryption: Queries for database encryption status
-  * list_cryptographic_providers: Lists EKM providers
-  * list_asymmetric_keys: Lists asymmetric keys
-  * list_symmetric_keys: Lists symmetric keys
-  * check_key_exists: Validates key existence
-
-- OracleQueryBuilder: Oracle query construction with methods:
-  * check_wallet_status: Queries wallet status
-  * list_encrypted_tablespaces: Lists encrypted tablespaces
-  * list_master_encryption_keys: Lists master encryption keys
-  * list_containers: Lists database containers
-  * check_tde_configuration: Queries TDE configuration
-
-- Connection utilities:
-  * build_connection_string: Generates database connection strings
-  * escape_sql_identifier: Escapes SQL identifiers for safe queries
-  * format_algorithm_name: Formats cryptographic algorithm names
-
-This module ensures:
-- Secure SQL query construction with proper escaping
-- Cross-platform database connectivity
-- Consistent query patterns for TDE operations
-- Safe identifier handling across database types
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- build_connection_string: Builds database connection strings for SQL Server and Oracle
+- SQLServerQueryBuilder: SQL Server-specific query builder for TDE operations
+  - check_encryption_status: Builds queries to check SQL Server encryption status
+  - list_databases: Builds queries to list SQL Server databases
+  - create_master_key: Builds queries to create SQL Server master keys
+  - create_database_encryption_key: Builds queries to create database encryption keys
+  - encrypt_database: Builds queries to encrypt SQL Server databases
+- OracleQueryBuilder: Oracle-specific query builder for TDE operations
+  - list_containers: Builds queries to list Oracle containers (PDBs)
+  - check_tde_configuration: Builds queries to check Oracle TDE configuration
+  - generate_mek: Builds commands to generate Oracle Master Encryption Keys
+  - open_wallet: Builds commands to open Oracle wallets
+  - close_wallet: Builds commands to close Oracle wallets
 """
 
 import re

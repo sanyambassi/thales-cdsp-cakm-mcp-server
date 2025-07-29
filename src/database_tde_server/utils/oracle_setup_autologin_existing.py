@@ -1,32 +1,20 @@
 """
-Auto-login wallet setup for existing Oracle TDE databases.
+Oracle TDE auto-login setup utilities
 
-This module provides utilities for adding auto-login (Single Sign-On) functionality
-to Oracle databases that already have TDE enabled. It creates software wallets and
-auto-login keystores for databases with existing HSM-based TDE configurations.
+This module provides utilities for setting up Oracle Transparent Data Encryption (TDE) auto-login functionality.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
-Setup process includes:
-- Software wallet creation for existing HSM TDE databases
-- Auto-login keystore generation and configuration
-- Integration with existing HSM keystore setup
-- Database parameter updates for auto-login support
-- Validation of auto-login functionality
-
-This utility is used for:
-- Adding auto-login capability to existing HSM-based TDE databases
-- Enabling automated database startup without manual wallet opening
-- Converting manual TDE databases to automated operation
-- Enhancing existing TDE deployments with convenience features
-
-Key benefits:
-- Eliminates need for manual wallet opening after database restarts
-- Maintains existing HSM security while adding convenience
-- Non-disruptive addition to existing TDE configurations
-- Preserves existing encryption keys and configurations
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+Available utilities:
+- setup_oracle_autologin_existing: Setup auto-login for existing Oracle TDE
+  - Creates auto-login wallet from existing keystore
+  - Configures auto-login functionality
+  - Sets up wallet permissions and accessibility
+  - Validates auto-login configuration
+- setup_oracle_autologin_hsm: Setup auto-login for HSM migration
+  - Configures auto-login for HSM-based wallets
+  - Sets up HSM credentials in auto-login wallet
+  - Validates HSM auto-login configuration
 """
 
 import logging

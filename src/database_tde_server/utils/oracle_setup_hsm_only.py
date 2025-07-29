@@ -1,32 +1,20 @@
 """
-HSM-only Oracle TDE setup without auto-login functionality.
+Oracle TDE HSM-only setup utilities
 
-This module provides utilities for setting up Oracle Transparent Data Encryption (TDE)
-using only Hardware Security Module (HSM) keystores, without creating auto-login
-wallets. This creates a more secure but manual TDE configuration.
+This module provides utilities for setting up Oracle Transparent Data Encryption (TDE) with HSM-only configuration.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
-Setup process includes:
-- Oracle environment configuration (ORACLE_HOME, ORACLE_SID, TNS_ADMIN)
-- HSM keystore creation and configuration
-- Database parameter setup for HSM-only TDE
-- Master encryption key generation in HSM
-- Validation of HSM-based TDE configuration
-
-This utility is used for:
-- High-security TDE deployments requiring manual wallet opening
-- Compliance scenarios requiring HSM-only key storage
-- Environments where auto-login is not permitted
-- Initial HSM TDE setup before adding auto-login later
-
-Key characteristics:
-- Maximum security with HSM-only key storage
-- Manual wallet opening required after database restarts
-- No software wallet or auto-login keystore creation
-- Simplified setup process for security-focused deployments
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+Available utilities:
+- setup_oracle_hsm_only: Oracle TDE setup with HSM-only configuration
+  - Configures HSM provider and credentials
+  - Sets up HSM-only key management
+  - Creates HSM-enabled wallets without auto-login
+  - Validates HSM-only configuration
+- configure_hsm_provider: Configure HSM provider for Oracle TDE
+  - Sets up HSM provider configuration
+  - Configures HSM credentials and settings
+  - Validates HSM provider accessibility
 """
 
 import logging

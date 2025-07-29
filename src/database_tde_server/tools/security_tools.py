@@ -1,22 +1,16 @@
 """
-SQL Server EKM (External Key Manager) object management tools.
+Database TDE security configuration tools
 
-This module provides tools for managing SQL Server External Key Manager objects,
-including cryptographic providers, credentials, and server logins that are used
-to access external key management systems like Thales CipherTrust.
+This module provides tools for configuring and managing security settings for Transparent Data Encryption (TDE)
+operations. Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available tools:
-- manage_sql_ekm_objects: Manages EKM providers, credentials, and logins with operations:
-  * manage_ekm_providers: List cryptographic providers
-  * manage_credentials: List, update, or drop credential objects
-  * manage_logins: List or drop server login objects
-
-These tools are essential for setting up and maintaining the connection between
-SQL Server and external key management systems for TDE operations.
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- manage_sql_ekm_objects: Manage SQL Server EKM objects (providers, credentials, logins)
+  - Operations: manage_ekm_providers, manage_credentials, manage_logins
+  - Lists cryptographic providers and their capabilities
+  - Manages server logins and credential mappings
+  - Handles EKM object lifecycle and cleanup
 """
 import json
 import logging

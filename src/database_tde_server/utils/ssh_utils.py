@@ -1,26 +1,20 @@
 """
-SSH connectivity utilities for remote Oracle database operations.
+SSH connectivity utilities for Database TDE operations
 
-This module provides SSH connection management and remote command execution capabilities
-for Oracle TDE operations that require access to database servers. It handles secure
-remote connections, file transfers, and command execution on Oracle database hosts.
+This module provides SSH utilities for remote database operations in Transparent Data Encryption (TDE) implementations.
+Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
-Key features:
-- SSH connection management with password and key-based authentication
-- Remote command execution on Oracle database servers
-- File transfer operations for wallet and configuration files
-- Oracle-specific SSH operations for TDE setup and management
-- Connection pooling and error handling for reliable remote operations
-
-This utility is essential for Oracle TDE operations that require:
-- Remote database restarts during TDE configuration
-- Wallet file management on database servers
-- Configuration file updates on remote hosts
-- Automated TDE deployment across multiple servers
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+Available utilities:
+- OracleSSHManager: SSH manager for Oracle server operations with enhanced key handling
+  - connect: Establishes SSH connection to Oracle server
+  - disconnect: Closes SSH connection and cleans up resources
+  - execute_command: Executes commands on remote Oracle server
+  - upload_file: Uploads files to remote Oracle server
+  - download_file: Downloads files from remote Oracle server
+  - list_oracle_databases: Lists all Oracle container databases on the server
+  - ensure_connected: Ensures SSH connection is established
+  - is_connected: Checks if SSH connection is active
 """
 import paramiko
 import logging

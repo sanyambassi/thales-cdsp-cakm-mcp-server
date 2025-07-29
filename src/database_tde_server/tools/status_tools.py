@@ -1,21 +1,16 @@
 """
-TDE status monitoring and assessment tools.
+Database TDE status monitoring tools
 
-This module provides comprehensive monitoring and assessment tools for Transparent
-Data Encryption (TDE) across SQL Server and Oracle databases. It offers unified
-status checking, compliance reporting, and best practices validation.
+This module provides tools for monitoring and reporting the status of Transparent Data Encryption (TDE)
+operations. Database encryption and encryption key management are handled by Thales CipherTrust Application Key Management (CAKM)
+connector, which is integrated with Thales CDSP (CipherTrust Data Security Platform).
 
 Available tools:
-- status_tde_ekm: Unified status tool with operations for both SQL Server and Oracle:
-  * SQL Server: assess_sql, compliance_report, best_practices, export_config, validate_setup
-  * Oracle: assess_oracle, list_containers, list_tablespaces
-
-This tool helps administrators monitor encryption health, generate audit reports,
-and validate TDE configurations against security best practices.
-
-All encryption and key management operations are handled by the Thales CipherTrust
-Application Key Management (CAKM) connector, which is integrated with the Thales
-CipherTrust Data Security Platform (CDSP).
+- status_tde_ekm: Comprehensive TDE status assessment for SQL Server and Oracle databases
+  - SQL Server operations: assess_sql, compliance_report, best_practices, export_config, validate_setup
+  - Oracle operations: assess_oracle, list_containers, list_tablespaces
+  - Provides unified interface for monitoring TDE health and configuration
+  - Supports multiple output formats and detailed recommendations
 """
 import json
 import logging
